@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Moteur de Recherche d'Images</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a6de5;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        select, input[type=file], button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background: #4a6de5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #6f8df8;
+        }
+        #results {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .result-card {
+            text-align: center;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .result-card img {
+            max-width: 150px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Moteur de Recherche d'Images</h1>
+    <form id="search-form" enctype="multipart/form-data">
+        <label>Choisissez un descripteur :</label>
+        <select name="descriptor" id="descriptor">
+            <option value="1">Histogramme Couleur</option>
+            <option value="2">Histogramme Niveaux de Gris</option>
+            <option value="3">Corrélogramme</option>
+            <option value="4">Descripteur Profond VGG16 (more accurate)</option>
+        </select>
+
+        <label>Choisissez une image :</label>
+        <input type="file" name="image" id="image" accept="image/*" required />
+
+        <button type="submit">Rechercher</button>
+    </form>
+
+    <div id="results"></div>
+</div>
+
+<script>
+document.getElementById('search-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = "<p>Recherche en cours...</p>";
+
+    try {
+        const res = await fetch('/api/search', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        resultsDiv.innerHTML = "";
+        if (data.results && data.results.length > 0) {
+            data.results.forEach(r => {
+                const div = document.createElement('div');
+                div.classList.add('result-card');
+                div.innerHTML = `
+                    <img src="${r.url}" alt="${r.filename}" />
+                    <p>${r.filename}</p>
+                    <p>Distance : ${r.distance}</p>
+                `;
+                resultsDiv.appendChild(div);
+            });
+        } else {
+            resultsDiv.innerHTML = "<p>Aucun résultat trouvé.</p>";
+        }
+    } catch (err) {
+        console.error(err);
+        resultsDiv.innerHTML = "<p>Erreur lors de la recherche.</p>";
+    }
+});
+</script>
+</body>
+</html>
